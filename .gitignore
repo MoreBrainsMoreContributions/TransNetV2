@@ -5,7 +5,11 @@
 .idea
 .ipynb_checkpoints
 
+# exclude everything
 mtoan65/vids/*
+
+# exception to the rule
+!mtoan65/vids.gitkeep 
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
