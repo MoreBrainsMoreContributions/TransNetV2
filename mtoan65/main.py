@@ -7,6 +7,7 @@ import sys
 # setting path
 sys.path.append('../MyTransNetV2/')
 from inference.transnetv2 import TransNetV2
+from transnet_utils import draw_video_with_predictions, scenes_from_predictions
 
 
 weights = "inference/transnetv2-weights"
@@ -18,6 +19,15 @@ visualize = True
 
 print(files)
 # print(w)
+
+class TransNetParams:
+    F = 16
+    L = 3
+    S = 2
+    D = 256
+    INPUT_WIDTH = 48
+    INPUT_HEIGHT = 27
+    CHECKPOINT_PATH = None
 
 model = TransNetV2(weights)
 for file in files:
@@ -40,6 +50,18 @@ for file in files:
 
     scenes = model.predictions_to_scenes(single_frame_predictions)
     np.savetxt(file + ".scenes.txt", scenes, fmt="%d")
+
+    # export video into numpy array using ffmpeg
+    video_stream, err = (
+        ffmpeg
+        .input(file)
+        .output('pipe:', format='rawvideo', pix_fmt='rgb24', s='{}x{}'.format(TransNetParams.INPUT_WIDTH, TransNetParams.INPUT_HEIGHT))
+        .run(capture_stdout=True)
+    )
+    video = np.frombuffer(video_stream, np.uint8).reshape([-1, TransNetParams.INPUT_HEIGHT, TransNetParams.INPUT_WIDTH, 3])
+
+    # For ilustration purposes, we show only 200 frames starting with frame number 8000.
+    draw_video_with_predictions(video[8000:8200], predictions[8000:8200], threshold=0.1)
 
     if visualize:
         if os.path.exists(file + ".vis.png"):
